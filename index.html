@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI价值迁徙实时表盘</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="rail" aria-label="主导航">
+        <div class="mark" title="AVCM">AV</div>
+        <button class="rail-btn is-active" title="实时表盘" aria-label="实时表盘">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-11h6V4h-6v5Z"/></svg>
+        </button>
+        <button class="rail-btn" title="事件流" aria-label="事件流">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v2H5V5Zm0 6h14v2H5v-2Zm0 6h10v2H5v-2Z"/></svg>
+        </button>
+        <button class="rail-btn" title="复盘" aria-label="复盘">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10h-2a8 8 0 1 1-2.34-5.66L14 10h8V2l-2.91 2.91A9.96 9.96 0 0 0 12 2Z"/></svg>
+        </button>
+        <span class="rail-spacer"></span>
+        <button class="rail-btn" id="resetData" title="恢复种子数据" aria-label="恢复种子数据">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h12v2H6v-2ZM8 3h8l1 11H7L8 3Zm2 2-.64 7h5.28L14 5h-4Z"/></svg>
+        </button>
+      </nav>
+
+      <aside class="filters">
+        <div class="panel-title">
+          <span>筛选器</span>
+          <button id="clearFilters">重置</button>
+        </div>
+
+        <section class="filter-group">
+          <h2>按层级 AVCM</h2>
+          <label><input type="checkbox" data-layer="M-模型层" checked /> <b class="tag tag-m">M</b> 模型层（商品化）</label>
+          <label><input type="checkbox" data-layer="A-应用/入口" checked /> <b class="tag tag-a">A</b> 入口层（工作流）</label>
+          <label><input type="checkbox" data-layer="C-算力/能源" checked /> <b class="tag tag-c">C</b> 算力层（上游）</label>
+          <label><input type="checkbox" data-layer="I-Agent基础设施" checked /> <b class="tag tag-i">I</b> Agent基建</label>
+          <label><input type="checkbox" data-layer="S-主权AI" checked /> <b class="tag tag-s">S</b> 主权AI</label>
+          <label><input type="checkbox" data-layer="V-价值/信任锚" checked /> <b class="tag tag-v">V</b> 信任锚</label>
+        </section>
+
+        <section class="filter-group">
+          <h2>状态</h2>
+          <label><input type="checkbox" data-status="已验证" checked /> 已验证</label>
+          <label><input type="checkbox" data-status="待验证" checked /> 待验证</label>
+          <label><input type="checkbox" data-status="观察中" checked /> 观察中</label>
+          <label><input type="checkbox" data-status="已失效" checked /> 已失效</label>
+        </section>
+
+        <section class="filter-group">
+          <h2>证据强度</h2>
+          <select id="evidenceFilter">
+            <option value="all">全部</option>
+            <option value="A">A 已证实</option>
+            <option value="B">B 多源交叉</option>
+            <option value="C">C 单源</option>
+            <option value="D">D 传闻</option>
+            <option value="E">E 个人判断</option>
+          </select>
+        </section>
+
+        <section class="filter-group">
+          <h2>时间范围</h2>
+          <select id="windowFilter">
+            <option value="all">全部</option>
+            <option value="7">近 7 天</option>
+            <option value="30">近 30 天</option>
+            <option value="90">近 90 天</option>
+          </select>
+        </section>
+
+        <section class="filter-group">
+          <h2>搜索关键词</h2>
+          <input id="searchInput" type="search" placeholder="实体、事件、备注..." />
+        </section>
+
+        <section class="filter-group">
+          <h2>刷新频率</h2>
+          <select id="refreshRate">
+            <option value="15">15 秒</option>
+            <option value="30">30 秒</option>
+            <option value="60" selected>60 秒</option>
+            <option value="300">5 分钟</option>
+          </select>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1>AI价值迁徙实时表盘</h1>
+            <p>跟踪 AVCM 各层资金流、注意力、证据强度与叙事迁徙，避免只盯模型 benchmark。</p>
+          </div>
+          <div class="top-actions">
+            <label class="live-toggle">
+              <input id="autoRefresh" type="checkbox" checked />
+              <span></span>
+              自动刷新
+            </label>
+            <span class="stamp">最后更新：<strong id="lastUpdated">--</strong></span>
+            <button id="addSignalBtn" class="primary-btn">新增信号</button>
+          </div>
+        </header>
+
+        <section class="kpi-grid" aria-label="核心指标">
+          <article class="kpi">
+            <span>总信号数</span>
+            <strong id="kpiTotal">0</strong>
+            <small id="kpiTotalSub">筛选后 0</small>
+          </article>
+          <article class="kpi danger">
+            <span>高影响信号</span>
+            <strong id="kpiHighImpact">0</strong>
+            <small>影响分 ≥ 4</small>
+          </article>
+          <article class="kpi warn">
+            <span>待验证/传闻</span>
+            <strong id="kpiPending">0</strong>
+            <small>优先补来源</small>
+          </article>
+          <article class="kpi">
+            <span>平均影响强度</span>
+            <strong id="kpiAvg">0.00</strong>
+            <small>1 到 5 分</small>
+          </article>
+          <article class="kpi calm">
+            <span>最热层级</span>
+            <strong id="kpiHotLayer">--</strong>
+            <small id="kpiHotScore">等待信号</small>
+          </article>
+        </section>
+
+        <section class="main-grid">
+          <article class="chart-panel">
+            <div class="section-head">
+              <div>
+                <h2>AVCM 层级热度</h2>
+                <p>按筛选后的信号计算平均影响分。</p>
+              </div>
+              <span class="mini-note">实时本地计算</span>
+            </div>
+            <div class="bar-chart" id="layerChart" aria-label="AVCM 层级热度图"></div>
+          </article>
+
+          <article class="thesis-panel">
+            <div class="section-head">
+              <div>
+                <h2>当前核心论点</h2>
+                <p>每条论点都对应一组可证伪指标。</p>
+              </div>
+            </div>
+            <div id="thesisList" class="thesis-list"></div>
+          </article>
+        </section>
+
+        <section class="purpose-panel">
+          <div>
+            <h2>这个表盘的作用</h2>
+            <p>
+              它不是荐股工具，而是一个“叙事迁徙探测器”：把 GLM-5.2、Cursor、算力扩建、Agent 基础设施融资、
+              主权 AI 等分散新闻统一放进 AVCM 框架，用证据等级、状态、信心和影响分追踪价值正在流向哪里。
+            </p>
+          </div>
+          <ul>
+            <li>把“模型层是否商品化”从观点变成可持续观察的数据。</li>
+            <li>区分已证实事实、传闻和个人判断，降低叙事锚定偏误。</li>
+            <li>按周/月/季度复盘，检查当下判断三年后是先知还是踩坑。</li>
+          </ul>
+        </section>
+
+        <section class="table-panel">
+          <div class="section-head">
+            <div>
+              <h2>实时信号事件流</h2>
+              <p id="tableSummary">当前 0 条信号</p>
+            </div>
+            <div class="table-actions">
+              <button id="exportCsv">导出 CSV</button>
+              <button id="seedSignal">模拟新信号</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>层级</th>
+                  <th>实体/事件</th>
+                  <th>信号摘要</th>
+                  <th>方向</th>
+                  <th>证据</th>
+                  <th>状态</th>
+                  <th>信心</th>
+                  <th>影响</th>
+                </tr>
+              </thead>
+              <tbody id="eventRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="signalDialog">
+      <form method="dialog" id="signalForm">
+        <div class="dialog-head">
+          <h2>新增观察信号</h2>
+          <button value="cancel" aria-label="关闭">×</button>
+        </div>
+        <div class="form-grid">
+          <label>日期 <input name="date" type="date" required /></label>
+          <label>层级
+            <select name="layer" required>
+              <option>M-模型层</option>
+              <option>A-应用/入口</option>
+              <option>C-算力/能源</option>
+              <option>I-Agent基础设施</option>
+              <option>S-主权AI</option>
+              <option>V-价值/信任锚</option>
+            </select>
+          </label>
+          <label>实体/事件 <input name="entity" required placeholder="例如 GLM-5.2" /></label>
+          <label>方向
+            <select name="direction">
+              <option>上升</option>
+              <option>下降</option>
+              <option>持平</option>
+              <option>待观察</option>
+            </select>
+          </label>
+          <label>证据
+            <select name="evidence">
+              <option>A-已证实</option>
+              <option>B-多源交叉</option>
+              <option>C-单源</option>
+              <option>D-传闻</option>
+              <option>E-个人判断</option>
+            </select>
+          </label>
+          <label>状态
+            <select name="status">
+              <option>待验证</option>
+              <option>已验证</option>
+              <option>观察中</option>
+              <option>已失效</option>
+            </select>
+          </label>
+          <label>信心(1-5) <input name="confidence" type="number" min="1" max="5" step="1" value="3" /></label>
+          <label>影响(1-5) <input name="impact" type="number" min="1" max="5" step="1" value="4" /></label>
+          <label class="wide">信号摘要 <textarea name="summary" required placeholder="这条信号说明了什么？"></textarea></label>
+          <label class="wide">来源/备注 <input name="source" placeholder="URL、媒体名或自己的观察记录" /></label>
+        </div>
+        <div class="dialog-actions">
+          <button value="cancel">取消</button>
+          <button class="primary-btn" value="default">保存信号</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
