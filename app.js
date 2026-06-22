@@ -7,6 +7,7 @@ const layerMeta = {
   "I-Agent基础设施": { code: "I", label: "Agent基建", sub: "卖铲子", className: "tag-i" },
   "S-主权AI": { code: "S", label: "主权AI", sub: "国家/安全", className: "tag-s" },
   "V-价值/信任锚": { code: "V", label: "信任锚", sub: "默认标准", className: "tag-v" },
+  "D-DeAI对冲": { code: "D", label: "DeAI对冲", sub: "真实负载", className: "tag-d" },
 };
 
 const seedEvents = [
@@ -122,6 +123,48 @@ const seedEvents = [
     impact: 4,
     source: "文章框架",
   },
+  {
+    id: crypto.randomUUID(),
+    date: "2026-06-22",
+    time: "09:12",
+    layer: "D-DeAI对冲",
+    entity: "Akash / OpenRouter",
+    summary: "去中心化算力市场已支撑约 1.7B tokens/day 级别吞吐，成本对冲从 PPT 进入真实负载验证。",
+    direction: "上升",
+    evidence: "C-单源",
+    status: "待验证",
+    confidence: 3,
+    impact: 4,
+    source: "用户补充",
+  },
+  {
+    id: crypto.randomUUID(),
+    date: "2026-06-22",
+    time: "09:18",
+    layer: "D-DeAI对冲",
+    entity: "Darkbloom / EigenLayer",
+    summary: "匿名推理与合规推理需求被真实 token 处理量验证，单月处理量超过 6 亿 token。",
+    direction: "上升",
+    evidence: "C-单源",
+    status: "待验证",
+    confidence: 3,
+    impact: 4,
+    source: "用户补充",
+  },
+  {
+    id: crypto.randomUUID(),
+    date: "2026-06-22",
+    time: "09:24",
+    layer: "D-DeAI对冲",
+    entity: "Venice",
+    summary: "约 7 亿美元市值的隐私 AI 平台体现主权/隐私推理需求韧性，是中心化 AI 的需求侧对冲。",
+    direction: "上升",
+    evidence: "C-单源",
+    status: "待验证",
+    confidence: 3,
+    impact: 4,
+    source: "用户补充",
+  },
 ];
 
 const thesis = [
@@ -130,6 +173,7 @@ const thesis = [
   ["C-算力/能源", "算力/能源成为稀缺资产", "训练与推理需求将长期推高芯片、电力和数据中心的战略权重。"],
   ["I-Agent基础设施", "Agent 基建先于爆发覆盖", "身份、支付、合规、观测性会在 Agent 真正爆发前先铺好水电煤。"],
   ["S-主权AI", "主权 AI 成为国家级资产", "安全体系接入会引入非商业定价，传统 DCF 解释力下降。"],
+  ["D-DeAI对冲", "DeAI 进入真实负载验证阶段", "成本、隐私和主权推理需求开始用 token 吞吐量证明，而不只是靠叙事融资。"],
 ];
 
 const syntheticSignals = [
@@ -138,6 +182,31 @@ const syntheticSignals = [
   ["C-算力/能源", "数据中心电力协议", "长期电力采购扩张，算力上游租金继续被定价。", "上升", "C-单源", "待验证", 3, 4],
   ["I-Agent基础设施", "Agent 权限管理 SDK", "企业系统接入数量上升，卖铲子逻辑继续成立。", "上升", "B-多源交叉", "观察中", 4, 4],
   ["S-主权AI", "政府模型采购", "公共部门采购条款强调安全、可控和本地部署。", "上升", "A-已证实", "已验证", 4, 4],
+  ["D-DeAI对冲", "匿名推理吞吐", "隐私推理网络吞吐提升，DeAI 对中心化 AI 形成结构性对冲。", "上升", "C-单源", "待验证", 3, 4],
+];
+
+const hedgeMetrics = [
+  {
+    title: "成本对冲端",
+    entity: "Akash / OpenRouter",
+    metric: "1.7B",
+    unit: "tokens/day",
+    copy: "去中心化算力若能继续压低延迟，就有机会成为企业推理成本的外部价格锚。",
+  },
+  {
+    title: "主权/隐私对冲端",
+    entity: "Darkbloom / EigenLayer",
+    metric: "600M+",
+    unit: "tokens/month",
+    copy: "匿名推理和合规推理的需求不再只是概念，已经出现可观察的真实负载。",
+  },
+  {
+    title: "隐私入口资产",
+    entity: "Venice",
+    metric: "$700M",
+    unit: "market cap",
+    copy: "隐私 AI 入口的估值说明，用户愿意为非中心化、非默认云路径支付期权溢价。",
+  },
 ];
 
 let events = loadEvents();
@@ -153,6 +222,8 @@ const els = {
   autoRefresh: document.querySelector("#autoRefresh"),
   lastUpdated: document.querySelector("#lastUpdated"),
   chart: document.querySelector("#layerChart"),
+  hedgeList: document.querySelector("#hedgeList"),
+  migrationMap: document.querySelector("#migrationMap"),
   rows: document.querySelector("#eventRows"),
   thesisList: document.querySelector("#thesisList"),
   tableSummary: document.querySelector("#tableSummary"),
@@ -163,7 +234,10 @@ const els = {
 function loadEvents() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    return Array.isArray(saved) && saved.length ? saved : seedEvents;
+    if (!Array.isArray(saved) || !saved.length) return seedEvents;
+    const savedKeys = new Set(saved.map((event) => `${event.layer}|${event.entity}|${event.summary}`));
+    const missingSeeds = seedEvents.filter((event) => !savedKeys.has(`${event.layer}|${event.entity}|${event.summary}`));
+    return [...missingSeeds, ...saved];
   } catch {
     return seedEvents;
   }
@@ -254,6 +328,8 @@ function render() {
 
   renderChart(stats);
   renderThesis(list);
+  renderHedgeMetrics(list);
+  renderMigrationMap(stats);
   renderRows(list);
 }
 
@@ -270,6 +346,68 @@ function renderChart(stats) {
       </div>
     `;
   }).join("");
+}
+
+function renderHedgeMetrics(list) {
+  const hedgeEvents = list.filter((event) => event.layer === "D-DeAI对冲");
+  const avgScore = avg(hedgeEvents.map((event) => event.impact * event.confidence / 5));
+  els.hedgeList.innerHTML = hedgeMetrics.map((metric) => `
+    <article class="hedge-card">
+      <span>${metric.title}</span>
+      <strong>${metric.metric}</strong>
+      <small>${metric.unit}</small>
+      <h3>${metric.entity}</h3>
+      <p>${metric.copy}</p>
+    </article>
+  `).join("");
+  document.querySelector("#hedgeSummary").textContent =
+    `当前 ${hedgeEvents.length} 条 DeAI 信号，负载强度均分 ${avgScore ? avgScore.toFixed(1) : "0.0"}`;
+}
+
+function renderMigrationMap(stats) {
+  const byLayer = new Map(stats.map((item) => [item.layer, item]));
+  const nodes = [
+    ["M-模型层", "模型层", "前沿溢价下行", 50, 44],
+    ["C-算力/能源", "算力/能源", "上游租金", 24, 20],
+    ["A-应用/入口", "入口/工作流", "用户时间", 76, 20],
+    ["I-Agent基础设施", "Agent基建", "水电煤", 24, 72],
+    ["S-主权AI", "主权AI", "安全定价", 76, 72],
+    ["D-DeAI对冲", "DeAI对冲", "成本/隐私", 50, 88],
+  ];
+  const lines = [
+    [50, 44, 24, 20],
+    [50, 44, 76, 20],
+    [50, 44, 24, 72],
+    [50, 44, 76, 72],
+    [50, 44, 50, 88],
+  ];
+  const lineMarkup = lines.map(([x1, y1, x2, y2]) => (
+    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arrow)" />`
+  )).join("");
+  const nodeMarkup = nodes.map(([layer, title, sub, x, y]) => {
+    const meta = layerMeta[layer];
+    const stat = byLayer.get(layer);
+    const score = stat?.count ? stat.avgImpact.toFixed(1) : "0.0";
+    return `
+      <g class="map-node ${meta.className}" transform="translate(${x} ${y})">
+        <circle r="9"></circle>
+        <text class="map-code" y="4">${meta.code}</text>
+        <text class="map-title" x="13" y="-3">${title}</text>
+        <text class="map-sub" x="13" y="10">${sub} · ${score}</text>
+      </g>
+    `;
+  }).join("");
+  els.migrationMap.innerHTML = `
+    <svg viewBox="0 0 100 105" role="img" aria-label="AI价值迁徙流向图">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z"></path>
+        </marker>
+      </defs>
+      <g class="migration-lines">${lineMarkup}</g>
+      ${nodeMarkup}
+    </svg>
+  `;
 }
 
 function renderThesis(list) {
