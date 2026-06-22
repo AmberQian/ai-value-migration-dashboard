@@ -39,6 +39,7 @@
           <label><input type="checkbox" data-layer="I-Agent基础设施" checked /> <b class="tag tag-i">I</b> Agent基建</label>
           <label><input type="checkbox" data-layer="S-主权AI" checked /> <b class="tag tag-s">S</b> 主权AI</label>
           <label><input type="checkbox" data-layer="V-价值/信任锚" checked /> <b class="tag tag-v">V</b> 信任锚</label>
+          <label><input type="checkbox" data-layer="D-DeAI对冲" checked /> <b class="tag tag-d">D</b> DeAI对冲</label>
         </section>
 
         <section class="filter-group">
@@ -155,6 +156,29 @@
           </article>
         </section>
 
+        <section class="migration-grid">
+          <article class="migration-panel">
+            <div class="section-head">
+              <div>
+                <h2>价值迁徙流向图</h2>
+                <p>模型层商品化后，价值向算力、入口、Agent 基建、主权 AI 与 DeAI 对冲层分流。</p>
+              </div>
+              <span class="mini-note">按影响分着色</span>
+            </div>
+            <div id="migrationMap" class="migration-map" aria-label="价值迁徙流向图"></div>
+          </article>
+
+          <article class="hedge-panel">
+            <div class="section-head">
+              <div>
+                <h2>DeAI 真实负载验证</h2>
+                <p id="hedgeSummary">当前 0 条 DeAI 信号</p>
+              </div>
+            </div>
+            <div id="hedgeList" class="hedge-list"></div>
+          </article>
+        </section>
+
         <section class="purpose-panel">
           <div>
             <h2>这个表盘的作用</h2>
@@ -219,6 +243,7 @@
               <option>I-Agent基础设施</option>
               <option>S-主权AI</option>
               <option>V-价值/信任锚</option>
+              <option>D-DeAI对冲</option>
             </select>
           </label>
           <label>实体/事件 <input name="entity" required placeholder="例如 GLM-5.2" /></label>
